@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 # Imports __version__, reference: https://stackoverflow.com/a/24517154/2220152
 
 setup(
-    name='pyhp',
+    name='pyhp-hypertext-preprocessor',
     version='0.1',
     url='https://github.com/yuvipanda/pyhp',
     license='3-clause BSD',
