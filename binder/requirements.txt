@@ -1,0 +1,2 @@
+jupyter-server-proxy>=1.5.2
+flask
