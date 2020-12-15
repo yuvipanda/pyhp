@@ -32,7 +32,7 @@ app = Flask(__name__)
 
 # FIXME: Should this be unconditionally trusted?!
 # Trust X-Forwarded-Prefix, so this can run behind jupyter-server-proxy
-# This lets you use request.script_root in your pyhp files
+# This lets you use request.url_root in your pyhp files
 app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1)
 
 logger = app.logger
