@@ -7,7 +7,6 @@ import ctypes
 from jinja2 import nodes, Environment
 import contextlib
 
-var_name_regex = re.compile(r"l_(\d+)_(.+)")
 #
 # From https://stackoverflow.com/a/55545295
 class PythonExtension(Extension):
@@ -56,34 +55,63 @@ class PythonExtension(Extension):
         # messages.
         compiled_code = compile("\n" * (lineno - 1) + code, filename, "exec")
 
-        # Capture stdout from this code
+        # Capture stdout from this code block
         sout = StringIO()
         with contextlib.redirect_stdout(sout):
-            # Execute the code with the context parents as global and context vars and locals.
+            # Execute the code, with globals & locals from our jinja2 context
             exec(compiled_code, ctx.parent, ctx.vars)
 
-        # Get a set of all names in the code.
+        # WARNING: Everything from below here is Yuvi's guess of what's actually
+        # happening.
+
+        # jinja2 generates python code for each template, and executes it.
+        # This generated python code calls this method to execute our
+        # {% py %} block. Once the code block executes, the following must
+        # be true:
+        #
+        # 1. Any new top-level locals defined in our code block must be available
+        #    for any new jinja2 blocks
+        # 2. Any pre-existing top level locals modified in our code block must have
+        #    their new values reflected in any further jinja2 blocks
+        #
+        # This is pretty messy!
+        #
+        # We will:
+        #
+        # 1. Peer into this generated code that is calling us, by looking
+        #    two frames in the call stack below our current frame. This is
+        #    probably very brittle, but it works for now.
+        # 2. Find local variables declared there, by making use of the fact that
+        #    local variables are defined in the jinja2 generated code of the
+        #    form `l_\d+_<variable-name>`. Again, very brittle.
+        # 3. If our block overrides any of those top level locals, we explicitly
+        #    *modify this generated code frame* so their values point to our
+        #    new values. This is pretty nuts.
+
+        # Get list of all local variable names defined in the top level in
+        # our code.
         code_names = set(compiled_code.co_names)
 
-        # The the frame in the jinja generated python code.
-        caller_frame = sys._getframe(2)
+        #
+        generated_code_frame = sys._getframe(2)
 
-        # Loop through all the locals.
-        for local_var_name in caller_frame.f_locals:
-            # Look for variables matching the template variable regex.
-            match = re.match(var_name_regex, local_var_name)
+        for local_var_name in generated_code_frame.f_locals:
+            # Look for variables that are jinja2 generated top-level locals
+            match = re.match(r"l_(\d+)_(?P<var_name>.+)", local_var_name)
+
             if match:
-                # Get the variable name.
-                var_name = match.group(2)
+                var_name = match.group('var_name')
 
-                # If the variable's name appears in the code and is in the locals.
+                # If the variable name appears in our code block, and is also a top-level local,
+                # we update it to match its new value
                 if (var_name in code_names) and (var_name in ctx.vars):
                     # Copy the value to the frame's locals.
-                    caller_frame.f_locals[local_var_name] = ctx.vars[var_name]
+                    generated_code_frame.f_locals[local_var_name] = ctx.vars[var_name]
                     # Do some ctypes vodo to make sure the frame locals are actually updated.
                     ctx.exported_vars.add(var_name)
+                    # https://pydev.blogspot.com/2014/02/changing-locals-of-frame-frameflocals.html
                     ctypes.pythonapi.PyFrame_LocalsToFast(
-                        ctypes.py_object(caller_frame),
+                        ctypes.py_object(generated_code_frame),
                         ctypes.c_int(1))
 
         # Return the captured text.
