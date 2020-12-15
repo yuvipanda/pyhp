@@ -19,6 +19,9 @@ STATIC_EXTENSIONS = [
     '.ttf', '.woff', '.woff2'
 ]
 
+# File to serve when / is hit
+INDEX_FILE = 'index.pyhp'
+
 env = Environment(
     loader=FileSystemLoader(BASE_DIR),
     extensions=[PythonExtension]
@@ -30,6 +33,7 @@ logger.setLevel(logging.INFO)
 
 
 @app.route('/<path:path>')
+@app.route('/', defaults={'path': INDEX_FILE})
 def render(path):
     _, ext = os.path.splitext(path)
     if ext != '.pyhp':
