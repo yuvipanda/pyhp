@@ -18,22 +18,46 @@ class PythonExtension(Extension):
         super().__init__(environment)
 
     def parse(self, parser):
+        """
+        Parse {% py %} blocks in templates.
+
+        Inserts an appropriate CallBlock into the parse tree where a {% py %}
+        block is found, so it can be executed when the template is rendered.
+
+        No actual code execution happens here.
+        """
         lineno = next(parser.stream).lineno
+        # Get contents until an {% endpy %} declaration
+        # drop_needle drops the {% endpy %} at the end
         body = parser.parse_statements(['name:endpy'], drop_needle=True)
+
+        # Insert a CallBlock that'll call our `_exec_python` method with
+        # the body of {% py %} when rendering
         return nodes.CallBlock(self.call_method('_exec_python',
                                                 [nodes.ContextReference(), nodes.Const(lineno), nodes.Const(parser.filename)]),
                                [], [], body).set_lineno(lineno)
 
     def _exec_python(self, ctx, lineno, filename, caller):
-        # Remove access indentation
+        """
+        Execute python code from inside a parsed {% py %} block.
+
+        Anything printed to stdout from the code in the block will be substituted
+        in the template output. Locals & imports persist between different {% py %}
+        blocks in the same template.
+        """
+
+        # Remove excess indentation
         code = dedent(caller())
 
-        # Compile the code.
-        compiled_code = compile("\n"*(lineno-1) + code, filename, "exec")
+        # Compile the code in this block so it can be executed.  We prepend
+        # enough newlines that when the code is compiled, the line numbers of
+        # the code *just* in this compiled block match the line numbers of the
+        # code in the template itself. This provides us with useful error
+        # messages.
+        compiled_code = compile("\n" * (lineno - 1) + code, filename, "exec")
 
-        # Create string io to capture stdio and replace it.
+        # Capture stdout from this code
         sout = StringIO()
-
         with contextlib.redirect_stdout(sout):
             # Execute the code with the context parents as global and context vars and locals.
             exec(compiled_code, ctx.parent, ctx.vars)
