@@ -1,4 +1,4 @@
-# (Py)thon (H)ypertext (P)reprocessor
+# (Py)HP (H)ypertext (P)reprocessor
 
 I want PHP style 'quick' template execution, but with Python instead.
 
@@ -11,6 +11,26 @@ I want PHP style 'quick' template execution, but with Python instead.
 
 I stole a lot of code [from stackoverflow](https://stackoverflow.com/a/55545295). Thanks
 to [@aarondewindt](https://github.com/aarondewindt) for helping make this a reality.
+
+## Installation
+
+PyHP is installable with `pip`.
+
+
+``` bash
+pip install pyhp-hypertext-preprocessor
+```
+
+You can then serve `.pyhp` files fom your current directory with:
+
+``` bash
+python -m pyhp.app
+```
+
+It is accessible at `http://localhost:5000`. If you have an `index.pyhp` file,
+that will be served. If not, you'll have to explicitly go to `http://localhost:5000/myfile.pyhp`
+to execute `myfile.pyhp`. Static files with common extensions (like css, js, jpg, etc)
+will automatically be served as static files.
 
 ## Setup
 
