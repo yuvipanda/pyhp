@@ -1,9 +1,11 @@
-# pyhp
-Python Hyptertext Preprocessor
+# (Py)thon (H)ypertext (P)reprocessor
+
+I want PHP style 'quick' template execution, but with Python instead.
+
+![PyHP sample code](docs/images/hello.pyhp.png)
 
 **Warning**: Currently *very* insecure. Do not use.
 
-I want PHP style 'quick' template execution, but with Python instead.
 
 ## Setup
 
