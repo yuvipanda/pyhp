@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, make_response, send_from_directory
+from flask import Flask, make_response, send_from_directory, request, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 import os
@@ -55,7 +55,14 @@ def render(path):
         template = env.get_template(path)
     except TemplateNotFound:
         return make_response((f"No such file {path} found", 404))
-    return template.render()
+
+    # Provide context for template
+    template_globals = {
+        'request': request,
+        'session': session,
+        'config': app.config,
+    }
+    return template.render(**template_globals)
 
 if __name__ == '__main__':
     app.run(debug=True)
