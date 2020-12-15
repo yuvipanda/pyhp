@@ -1,5 +1,6 @@
 import logging
 from flask import Flask, make_response, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 import os
 from .extension import PythonExtension
@@ -28,6 +29,12 @@ env = Environment(
 )
 
 app = Flask(__name__)
+
+# FIXME: Should this be unconditionally trusted?!
+# Trust X-Forwarded-Prefix, so this can run behind jupyter-server-proxy
+# This lets you use request.script_root in your pyhp files
+app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1)
+
 logger = app.logger
 logger.setLevel(logging.INFO)
 
