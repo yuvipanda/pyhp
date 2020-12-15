@@ -5,6 +5,7 @@ import sys
 import re
 import ctypes
 from jinja2 import nodes, Environment
+import contextlib
 
 var_name_regex = re.compile(r"l_(\d+)_(.+)")
 #
@@ -32,17 +33,10 @@ class PythonExtension(Extension):
 
         # Create string io to capture stdio and replace it.
         sout = StringIO()
-        stdout = sys.stdout
-        sys.stdout = sout
 
-        try:
+        with contextlib.redirect_stdout(sout):
             # Execute the code with the context parents as global and context vars and locals.
             exec(compiled_code, ctx.parent, ctx.vars)
-        except Exception:
-            raise
-        finally:
-            # Restore stdout whether the code crashed or not.
-            sys.stdout = stdout
 
         # Get a set of all names in the code.
         code_names = set(compiled_code.co_names)
