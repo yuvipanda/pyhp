@@ -7,6 +7,11 @@ I want PHP style 'quick' template execution, but with Python instead.
 **Warning**: Currently *very* insecure. Do not use.
 
 
+## Credit
+
+I stole a lot of code [from stackoverflow](https://stackoverflow.com/a/55545295). Thanks
+to [@aarondewindt](https://github.com/aarondewindt) for helping make this a reality.
+
 ## Setup
 
 You can set it up for local development with:
