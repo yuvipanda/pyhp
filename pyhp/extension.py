@@ -1,6 +1,7 @@
 from jinja2.ext import Extension
 from textwrap import dedent
 from io import StringIO
+import os
 import sys
 import re
 import ctypes
@@ -55,11 +56,35 @@ class PythonExtension(Extension):
         # messages.
         compiled_code = compile("\n" * (lineno - 1) + code, filename, "exec")
 
+        # when a pyhp file is executed, the cwd should be set to the directory the
+        # file is in. Similarly, when it tries to import python files, we should
+        # look for it in the directory the pyhp file is in, *not* the directory
+        # where the server started. So we save the current values and restore them
+        # when done.
+        # FIXME: If the {% py %} block calls os.chdir, that will not persist across
+        # other blocks in the file. Same for `sys.path` manipulation
+        cur_cwd = os.getcwd()
+        cur_sys_path = sys.path
+
         # Capture stdout from this code block
         sout = StringIO()
-        with contextlib.redirect_stdout(sout):
-            # Execute the code, with globals & locals from our jinja2 context
-            exec(compiled_code, ctx.parent, ctx.vars)
+        try:
+            # FIXME: Make sure this isn't allowing for path traversal attacks?
+            file_dir = os.path.dirname(os.path.abspath(filename))
+            os.chdir(file_dir)
+            new_sys_path = sys.path.copy()
+            # The first entry in sys.path will always (haha) be the current directory.
+            # By setting it to the directory of our pyhp file, our pyhp file can import
+            # other .py files there!
+            new_sys_path[0] = file_dir
+            sys.path = new_sys_path
+            with contextlib.redirect_stdout(sout):
+                # Execute the code, with globals & locals from our jinja2 context
+                exec(compiled_code, ctx.parent, ctx.vars)
+        finally:
+            sys.path = cur_sys_path
+            os.chdir(cur_cwd)
+
 
         # WARNING: Everything from below here is Yuvi's guess of what's actually
         # happening.
