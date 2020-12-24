@@ -56,13 +56,7 @@ def render(path):
     except TemplateNotFound:
         return make_response((f"No such file {path} found", 404))
 
-    # Provide context for template
-    template_globals = {
-        'request': request,
-        'session': session,
-        'config': app.config,
-    }
-    return template.render(**template_globals)
+    return template.render()
 
 if __name__ == '__main__':
     app.run(debug=True)
