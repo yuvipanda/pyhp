@@ -24,13 +24,19 @@ pip install pyhp-hypertext-preprocessor
 You can then serve `.pyhp` files fom your current directory with:
 
 ``` bash
-python -m pyhp.app
+pyhp
 ```
 
 It is accessible at `http://localhost:5000`. If you have an `index.pyhp` file,
 that will be served. If not, you'll have to explicitly go to `http://localhost:5000/myfile.pyhp`
 to execute `myfile.pyhp`. Static files with common extensions (like css, js, jpg, etc)
 will automatically be served as static files.
+
+## Production install
+
+We suggest using [gunicorn](https://gunicorn.org/) to deploy to production.
+`gunicorn pyhp` should start serving files from the current working directory
+of `gunicorn`.
 
 ## Setup
 
@@ -43,18 +49,18 @@ You can set it up for local development with:
    python3 -m venv venv
    source venv/bin/activate
    ```
-   
+
 3. Install the `pyhp` package
 
    ```bash
-   pip install -e . 
+   pip install -e .
    ```
-   
+
 4. Run `pyhp`!
 
    ```bash
    python3 -m pyhp.app
    ```
-   
+
    This should serve the contents of the current directory. You can
    try going to `http://localhost:5000/hi.pyhp` to test it out.
