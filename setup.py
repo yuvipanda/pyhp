@@ -17,4 +17,9 @@ setup(
     platforms='any',
     install_requires=['jinja2', 'flask'],
     zip_safe=False,
+    entry_points={
+        "console_scripts": [
+            "pyhp = pyhp.__main__:main",
+        ],
+    },
 )

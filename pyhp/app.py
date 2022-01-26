@@ -28,19 +28,19 @@ env = Environment(
     extensions=[PythonExtension]
 )
 
-app = Flask(__name__)
+application = Flask(__name__)
 
 # FIXME: Should this be unconditionally trusted?!
 # Trust X-Forwarded-Prefix, so this can run behind jupyter-server-proxy
 # This lets you use request.url_root in your pyhp files
-app.wsgi_app = ProxyFix(app.wsgi_app, x_prefix=1)
+application.wsgi_app = ProxyFix(application.wsgi_app, x_prefix=1)
 
-logger = app.logger
+logger = application.logger
 logger.setLevel(logging.INFO)
 
 
-@app.route('/<path:path>')
-@app.route('/', defaults={'path': INDEX_FILE})
+@application.route('/<path:path>')
+@application.route('/', defaults={'path': INDEX_FILE})
 def render(path):
     full_path = os.path.realpath(path)
     # Guard against directory traversal
@@ -63,4 +63,4 @@ def render(path):
     return template.render()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    application.run(debug=True)
