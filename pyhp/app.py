@@ -42,6 +42,10 @@ logger.setLevel(logging.INFO)
 @app.route('/<path:path>')
 @app.route('/', defaults={'path': INDEX_FILE})
 def render(path):
+    full_path = os.path.realpath(path)
+    # Guard against directory traversal
+    if os.path.commonpath([BASE_DIR, full_path]) != BASE_DIR:
+        return make_response(('Access denied', 403))
     _, ext = os.path.splitext(path)
     if ext != '.pyhp':
         if ext in STATIC_EXTENSIONS:
